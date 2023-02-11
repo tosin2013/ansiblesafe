@@ -20,12 +20,13 @@ import (
 )
 
 type Configuration struct {
-	RhsmUsername      string `yaml:"rhsm_username"`
-	RhsmPassword      string `yaml:"rhsm_password"`
-	RhsmOrg           string `yaml:"rhsm_org"`
-	RhsmActivationKey string `yaml:"rhsm_activationkey"`
-	AdminUserPassword string `yaml:"admin_user_password"`
-	OfflineToken      string `yaml:"offline_token"`
+	RhsmUsername        string `yaml:"rhsm_username"`
+	RhsmPassword        string `yaml:"rhsm_password"`
+	RhsmOrg             string `yaml:"rhsm_org"`
+	RhsmActivationKey   string `yaml:"rhsm_activationkey"`
+	AdminUserPassword   string `yaml:"admin_user_password"`
+	OfflineToken        string `yaml:"offline_token"`
+	OpenShiftPullSecret string `yaml:"openshift_pull_secret"`
 }
 
 func main() {
@@ -93,15 +94,16 @@ func main() {
 				fmt.Print("Enter your RHSM activation key: ")
 				fmt.Scanln(&config.RhsmActivationKey)
 
+				notice("Enter Admin password for VMs. This password will be used to access the VMs via SSH.")
 				for {
-					fmt.Print("RHSM password: ")
+					fmt.Print("Enter the admin password to be used to access VMs: ")
 					adminPassword, err := gopass.GetPasswdMasked()
 					if err != nil {
 						log.Fatalf("Error reading password: %s", err)
 					}
 					config.AdminUserPassword = string(adminPassword)
 
-					fmt.Print("Confirm RHSM password: ")
+					fmt.Print("Confirm admin password: ")
 					confirmPassword, err := gopass.GetPasswdMasked()
 					if err != nil {
 						log.Fatalf("Error reading password: %s", err)
@@ -113,12 +115,24 @@ func main() {
 					fmt.Println("Passwords do not match. Please try again.")
 				}
 
-				notice("Offline token not found you can find it at https://access.redhat.com/management/api:")
+				notice("Offline token not found you can find it at: https://access.redhat.com/management/api")
 				// Mix up multiple attributes
 				//notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 				//notice("Don't forget this...")
 				fmt.Print("Enter your Offline Token: ")
 				fmt.Scanln(&config.OfflineToken)
+
+				//var pullSecret string
+
+				fmt.Print("Would you like to enter an OpenShift pull secret? (y/n): ")
+				var response string
+				fmt.Scanln(&response)
+
+				if strings.ToLower(response) == "y" {
+					notice("To deploy and OpenShift envioenment enter the pull secret which can be found at: https://cloud.redhat.com/openshift/install/pull-secret")
+					fmt.Print("Enter OpenShift pull secret: ")
+					fmt.Scanln(&config.OpenShiftPullSecret)
+				}
 
 				configData, err := yaml.Marshal(config)
 				if err != nil {

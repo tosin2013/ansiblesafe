@@ -21,7 +21,9 @@ jobs:
         run: |
           VERSION=$(hack/version.sh)
           hack/changelog.sh $VERSION > build/$-CHANGELOG.md
+          echo "VERSION=$VERSION"
           cat build/$-CHANGELOG.md
+          ls -lath .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

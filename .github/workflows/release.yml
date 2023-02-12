@@ -27,7 +27,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: build/$-CHANGELOG.md
-          files: build/ansiblesafe-*.tar.gz
+          body_path: ../build/$-CHANGELOG.md
+          files: ../build/ansiblesafe-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}

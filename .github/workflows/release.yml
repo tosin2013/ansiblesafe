@@ -22,6 +22,7 @@ jobs:
           VERSION=$(hack/version.sh)
           hack/changelog.sh $VERSION > build/$-CHANGELOG.md
           echo "VERSION=$VERSION"
+          ls -R build
           cat build/$-CHANGELOG.md
           ls -lath .
 

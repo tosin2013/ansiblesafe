@@ -1,5 +1,5 @@
 # ansiblesafe
-ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML files using the Ansible Vault CLI. With a user-friendly menu option, you can easily secure your secrets in an Ansible playbook.1
+ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML files using the Ansible Vault CLI. With a user-friendly menu option, you can easily secure your secrets in an Ansible playbook. This has been custom build to store Red Hat Credentials to be used with Ansible playbooks. 
 
 ![20230211185054](https://i.imgur.com/gsItHDF.png)
 
@@ -37,24 +37,41 @@ offline_token: offlinetoken
 openshift_pull_secret: pullsecret
 ```
 
-## Usage
-1. Download the ansiblesafe script to your local machine.
-2. Open a terminal and navigate to the directory where the script is located.
-3. Run the script by typing `go run ansiblesafe.go` in the terminal.
-4. Ente
-5. Choose between encrypting and decrypting a YAML file.
-6. Enter the file path and vault password when prompted.
-7. Let ansiblesafe handle the rest!
+## Quick Start 
+```
+curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.1/ansiblesafe-v0.0.1-linux-amd64.tar.gz
+tar -zxvf ansiblesafe-v0.0.1-linux-amd64.tar.gz
+chmod +x ansiblesafe-linux-amd64 
+sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
+```
+
+## Menu Options 
+**If you do not pass any flags everything wil be auto generated for you**
+```
+$ ansiblesafe -h
+Usage of ansiblesafe:
+  -f, --file string     Path to YAML file (default: $HOME/vault.yml)
+  -o, --operation int   Operation to perform (1: encrypt, 2: decrypt)
+pflag: help requested
+```
 
 ## Requirements
-* Go
 * Ansible Vault CLI
+
+## Deveploer requirements - WIP
+* Go
+```
+git clone https://github.com/tosin2013/ansiblesafe.git
+cd ansiblesafe
+# configure dependancies 
+# run app 
+go run ansiblesafe.go
+```
 
 ## Contributing
 This project is open source and contributions are welcome! If you have any suggestions or bug reports, please open an issue or create a pull request.
 
 ## License
-This project is licensed under the MIT License.
 
 
 ## Authors

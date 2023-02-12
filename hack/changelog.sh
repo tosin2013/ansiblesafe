@@ -6,6 +6,11 @@ VERSION=$(echo "$1" | sed 's/^v//g')
 IFS=''
 found=0
 
+if [ !  -d build ];
+then
+    mkdir build
+fi
+
 cat CHANGELOG.md | while read "line"; do
 
     # If not found and matching heading

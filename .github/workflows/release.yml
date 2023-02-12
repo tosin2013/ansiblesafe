@@ -15,19 +15,18 @@ jobs:
 
       - name: Build project
         run: |
-          make build-in-docker
+          make all
 
       - name: Generate Changelog
         run: |
           VERSION=$(hack/version.sh)
-          mkdir -p ../build
-          hack/changelog.sh $VERSION > ../build/$-CHANGELOG.md
-          cat ../build/$-CHANGELOG.md
+          hack/changelog.sh $VERSION > build/$-CHANGELOG.md
+          cat build/$-CHANGELOG.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: ../build/$-CHANGELOG.md
-          files: ../build/ansiblesafe-*.tar.gz
+          body_path: build/$-CHANGELOG.md
+          files: build/ansiblesafe-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}

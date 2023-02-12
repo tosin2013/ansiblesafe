@@ -1,5 +1,5 @@
 # ansiblesafe
-ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML files using the Ansible Vault CLI. With a user-friendly menu option, you can easily secure your secrets in an Ansible playbook.
+ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML files using the Ansible Vault CLI. With a user-friendly menu option, you can easily secure your secrets in an Ansible playbook.1
 
 ![20230211185054](https://i.imgur.com/gsItHDF.png)
 

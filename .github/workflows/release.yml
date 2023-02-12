@@ -20,16 +20,16 @@ jobs:
       - name: Generate Changelog
         run: |
           VERSION=$(hack/version.sh)
-          hack/changelog.sh $VERSION > build/$-CHANGELOG.md
+          hack/changelog.sh $VERSION > build/CHANGELOG.md
           echo "VERSION=$VERSION"
           ls -R build
-          cat build/$-CHANGELOG.md
+          cat build/CHANGELOG.md
           ls -lath .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: build/$-CHANGELOG.md
+          body_path: build/CHANGELOG.md
           files: build/ansiblesafe-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}

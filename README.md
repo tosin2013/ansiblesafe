@@ -53,10 +53,9 @@ sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
 **If you do not pass any flags everything wil be auto generated for you**
 ```
 $ ansiblesafe -h
-Usage of ansiblesafe:
+Usage of /tmp/go-build1657505477/b001/exe/ansiblesafe:
   -f, --file string     Path to YAML file (default: $HOME/vault.yml)
-  -o, --operation int   Operation to perform (1: encrypt, 2: decrypt)
-pflag: help requested
+  -o, --operation int   Operation to perform (1: encrypt, 2: decrypt 3: skip encrypting/decrypting)
 ```
 
 ## Requirements

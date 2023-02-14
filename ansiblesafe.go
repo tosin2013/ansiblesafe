@@ -138,7 +138,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Error marshaling YAML data: %s", err)
 				}
-				err = ioutil.WriteFile("vault.yml", configData, 0644)
+				err = ioutil.WriteFile(filePath, configData, 0644)
 				if err != nil {
 					log.Fatalf("Error writing vault file: %s", err)
 				}

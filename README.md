@@ -42,6 +42,7 @@ openshift_pull_secret: pullsecret
 
 ## Quick Start 
 ```
+dnf install ansible-core -y 
 curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.1/ansiblesafe-v0.0.1-linux-amd64.tar.gz
 tar -zxvf ansiblesafe-v0.0.1-linux-amd64.tar.gz
 chmod +x ansiblesafe-linux-amd64 
@@ -62,7 +63,9 @@ pflag: help requested
 * Ansible Vault CLI
 
 ## Deveploer requirements - WIP
-* Go
+* [Go](https://gist.github.com/tosin2013/d4f4420231a96aed2116efb4d6b151a0)
+* git
+* ansible-core
 ```
 git clone https://github.com/tosin2013/ansiblesafe.git
 cd ansiblesafe

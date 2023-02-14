@@ -53,11 +53,11 @@ func main() {
 		var config Configuration
 
 		var rootCmd = &cobra.Command{
-			Use:   "generate-config",
+			Use:   "ansiblesafe",
 			Short: "Generate a YAML configuration file",
-			Long: `generate-config is a simple command line tool for generating a YAML configuration file with specified values.
+			Long: `ansiblesafe is a simple command line tool for generating a YAML configuration file with common Red Hat credentials.
 				
-				This tool provides an interactive menu option for the user to input the values for the configuration.`,
+				This tool provides an interactive menu option for the user to input the values for  common Red Hat credentials.`,
 			Run: func(cmd *cobra.Command, args []string) {
 				notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 				notice("Please enter the following to generate your vault.yml file:")

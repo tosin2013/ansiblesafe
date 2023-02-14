@@ -69,8 +69,9 @@ pflag: help requested
 ```
 git clone https://github.com/tosin2013/ansiblesafe.git
 cd ansiblesafe
-# configure dependancies 
-# run app 
+```
+### run app
+``` 
 go run ansiblesafe.go
 ```
 

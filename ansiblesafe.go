@@ -39,7 +39,7 @@ func main() {
 	var choice int
 
 	pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")
-	pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt, 2: decrypt)")
+	pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt, 2: decrypt 3: skip encrypting/decrypting)")
 	pflag.Parse()
 
 	if filePath == "" {
@@ -152,6 +152,7 @@ func main() {
 	if choice == 0 {
 		fmt.Println("1. Encrypt vault.yml file")
 		fmt.Println("2. Decrypt vault.yml file")
+		fmt.Println("3. Skip file encryption/decryption")
 		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 		notice("Please choose an option: ")
 
@@ -159,14 +160,15 @@ func main() {
 	}
 
 	var password string
-	fmt.Print("Please enter the vault password: ")
+	if choice == 1 || choice == 2 {
+		fmt.Print("Please enter the vault password: ")
 
-	vaultpassword, err := gopass.GetPasswdMasked()
-	if err != nil {
-		log.Fatalf("Error reading password: %s", err)
+		vaultpassword, err := gopass.GetPasswdMasked()
+		if err != nil {
+			log.Fatalf("Error reading password: %s", err)
+		}
+		password = string(vaultpassword)
 	}
-	password = string(vaultpassword)
-
 	var vaultCommand string
 	if choice == 1 {
 		fileBytes, err := ioutil.ReadFile(filePath)
@@ -180,6 +182,9 @@ func main() {
 		}
 	} else if choice == 2 {
 		vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q)", filePath, password)
+	} else if choice == 3 {
+			notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
+			notice("Skipping file encryption.")
 	} else {
 		log.Fatalf("Invalid choice: %d", choice)
 	}

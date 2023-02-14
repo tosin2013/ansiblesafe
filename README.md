@@ -43,8 +43,8 @@ openshift_pull_secret: pullsecret
 ## Quick Start 
 ```
 dnf install ansible-core -y 
-curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.2/ansiblesafe-v0.0.2-linux-amd64.tar.gz
-tar -zxvf ansiblesafe-v0.0.2-linux-amd64.tar.gz
+curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.3/ansiblesafe-v0.0.3-linux-amd64.tar.gz
+tar -zxvf ansiblesafe-v0.0.3-linux-amd64.tar.gz
 chmod +x ansiblesafe-linux-amd64 
 sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
 ```

@@ -58,6 +58,19 @@ Usage of /tmp/go-build1657505477/b001/exe/ansiblesafe:
   -o, --operation int   Operation to perform (1: encrypt, 2: decrypt 3: skip encrypting/decrypting)
 ```
 
+## Usage
+**Instructions to use ansiblesale without a password prompt**
+```
+$ touch ~/.vault_password
+$ chmod 600 ~/.vault_password
+# The leading space here is necessary to keep the command out of the command history
+$  echo password >> ~/.vault_password
+# Link the password file into the current working directory
+$ ln ~/.vault_password .
+# Set the environment variable to the location of the file
+$ export ANSIBLE_VAULT_PASSWORD_FILE=.vault_password
+```
+
 ## Requirements
 * Ansible Vault CLI
 

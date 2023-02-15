@@ -35,7 +35,7 @@ func main() {
 		log.Fatalf("Error: ansible-vault CLI is not installed. Please install it before using this script.")
 	}
 	var filePath string
-
+	var vaultPath string
 	var choice int
 
 	pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")
@@ -160,14 +160,47 @@ func main() {
 	}
 
 	var password string
-	if choice == 1 || choice == 2 {
-		fmt.Print("Please enter the vault password: ")
-
-		vaultpassword, err := gopass.GetPasswdMasked()
+	var vaultpassword string
+	var vaultPathMissing bool
+	if vaultPath == "" {
+		usr, err := user.Current()
 		if err != nil {
-			log.Fatalf("Error reading password: %s", err)
+			log.Fatalf("Error getting current user: %s", err)
 		}
-		password = string(vaultpassword)
+		vaultPath = filepath.Join(usr.HomeDir, ".vault_password")
+		if _, err := os.Stat(vaultPath); os.IsNotExist(err) {
+			// The file path does not exist
+			fmt.Printf("File path %s does not exist\n", vaultPath)
+			vaultPathMissing = true
+		} else if err != nil {
+			// There was an error checking the file path
+			fmt.Printf("Error checking file path: %s\n", err.Error())
+			vaultPathMissing = true
+		} else {
+			// The file path exists
+			fmt.Printf("File path %s exists\n", vaultPath)
+			if _, err := os.Stat(vaultPath); err == nil {
+				data, err := ioutil.ReadFile(vaultPath)
+				if err != nil {
+					fmt.Printf("Error reading file: %s\n", err.Error())
+					os.Exit(1)
+				}
+				vaultpassword = string(data)
+				password = string(vaultpassword)
+			}
+		}
+	}
+
+	if choice == 1 || choice == 2 {
+		if vaultPathMissing == true {
+			fmt.Print("Please enter the vault password: ")
+
+			vaultpassword, err := gopass.GetPasswdMasked()
+			if err != nil {
+				log.Fatalf("Error reading password: %s", err)
+			}
+			password = string(vaultpassword)
+		}
 	}
 	var vaultCommand string
 	if choice == 1 {
@@ -176,15 +209,24 @@ func main() {
 			log.Fatalf("Error reading file %s: %s", filePath, err)
 		}
 		if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
-			vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q)", filePath, password)
+			if vaultPathMissing == true {
+				fmt.Println("Encrypting file..."+password)
+				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q)", filePath, password)
+			} else {
+				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=%s --encrypt-vault-id default", filePath, vaultPath)
+			}
 		} else {
 			log.Fatalf("Error: %s is already encrypted.", filePath)
 		}
 	} else if choice == 2 {
-		vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q)", filePath, password)
+		if vaultPathMissing == true {
+			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q)", filePath, password)
+		} else {
+			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=%s", filePath, vaultPath)
+		}
 	} else if choice == 3 {
-			notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
-			notice("Skipping file encryption.")
+		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
+		notice("Skipping file encryption.")
 	} else {
 		log.Fatalf("Invalid choice: %d", choice)
 	}

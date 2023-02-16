@@ -2,14 +2,14 @@
 
 Create Relase
 ```
-TAG=0.0.3
+TAG=0.0.4
 git tag -a v${TAG} -m "Creating v${TAG} release"
 git push origin v${TAG}
 ```
 
 Delete Release
 ```
-TAG=0.0.3
+TAG=0.0.4
 git tag -d v${TAG}
 git push origin --delete v${TAG}
 ```

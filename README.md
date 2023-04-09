@@ -6,6 +6,11 @@ ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML
 
 ![20230211185054](https://i.imgur.com/gsItHDF.png)
 
+## Features
+* Generate ansible vault files to be used for playbooks 
+* pull secrets from HashiCorp Vault ans create ansible vault files
+* write ansible vault values to HashiCorp Vault
+  
 ## Outputs
 
 ### Encrypted Result 
@@ -56,6 +61,23 @@ $ ansiblesafe -h
 Usage of /tmp/go-build1657505477/b001/exe/ansiblesafe:
   -f, --file string     Path to YAML file (default: $HOME/vault.yml)
   -o, --operation int   Operation to perform (1: encrypt 2: decrypt 3: Write secrets to HashiCorp Vault 4: Read secrets from HashiCorp Vault 5: skip encrypting/decrypting)
+```
+
+## Hasicorp Examples 
+**Write secrets to HashiCorp Vault**
+```
+$ export VAULT_ADDRESS=http://127.0.0.1:8200/
+$ export VAULT_TOKEN=token
+$ export SECRET_PATH=ansiblesafe/example
+$ ansiblesafe -o 3
+```
+
+**Read secrets from HashiCorp Vault**
+```
+$ export VAULT_ADDRESS=http://127.0.0.1:8200/
+$ export VAULT_TOKEN=token
+$ export SECRET_PATH=ansiblesafe/example
+$ ansiblesafe -o 4
 ```
 
 ## Usage

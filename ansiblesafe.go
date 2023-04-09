@@ -42,7 +42,7 @@ func main() {
 	var choice int
 
 	pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")
-	pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt 2: decrypt 3: Write secrets to HashiCorp Vault 4: Read secrets from HashiCorp Vault 5: skip encrypting/decrypting)")
+	pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt, 2: decrypt, 3: Write secrets to HashiCorp Vault, 4: Read secrets from HashiCorp Vault, 5: skip encrypting/decrypting)")
 	pflag.Parse()
 
 	if filePath == "" {

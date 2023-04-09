@@ -1,7 +1,7 @@
-## 0.0.0
+## v0.0.5
 
 ### Improvements
 
-* Frist Build
+* Adding Hashicorp Vault integration
 
 ### Bug fixes

@@ -66,6 +66,7 @@ func main() {
 		if secretPath == "" {
 			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
 		}
+		
 		readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
 		os.Exit(0)
 	}
@@ -342,6 +343,7 @@ func main() {
 
 func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath string) error {
     // Read secrets from HashiCorp Vault
+	fmt.Println("Current file path is: "+filePath)
     vaultConfig := api.DefaultConfig()
     vaultConfig.Address = vaultAddress
     vaultConfig.Timeout = 10 * time.Second
@@ -359,11 +361,11 @@ func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secr
 
     secret, err := kv2.Get(ctx, secretPath)
     if err != nil {
-        return fmt.Errorf("Error retrieving secret from Vault: %w", err)
+        log.Fatal("Error retrieving secret from Vault: %w", err)
     }
 
     if secret == nil {
-        return fmt.Errorf("Error: Secret not found at path %s", secretPath)
+        log.Fatal("Error: Secret not found at path %s", secretPath)
     }
 
     // Extract secrets from the retrieved data
@@ -380,13 +382,13 @@ func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secr
     // Marshal secrets to YAML data
     configData, err := yaml.Marshal(config)
     if err != nil {
-        return fmt.Errorf("Error marshaling YAML data: %w", err)
+        log.Fatal("Error marshaling YAML data: %w", err)
     }
 
     // Write secrets to YAML file
     err = ioutil.WriteFile(filePath, configData, 0644)
     if err != nil {
-        return fmt.Errorf("Error writing vault file: %w", err)
+        log.Fatal("Error writing vault file: %w", err)
     }
     fmt.Println("Secrets read from Vault and written to file successfully.")
 

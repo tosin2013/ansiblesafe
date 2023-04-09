@@ -8,7 +8,7 @@ ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML
 
 ## Features
 * Generate ansible vault files to be used for playbooks 
-* pull secrets from HashiCorp Vault ans create ansible vault files
+* Pull secrets from HashiCorp Vault and create ansible vault files
 * write ansible vault values to HashiCorp Vault
   
 ## Outputs

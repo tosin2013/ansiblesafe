@@ -72,12 +72,13 @@ $ export SECRET_PATH=ansiblesafe/example
 $ ansiblesafe -o 3
 ```
 
-**Read secrets from HashiCorp Vault**
+**Read secrets from HashiCorp Vault and safe to vault.yaml**
 ```
 $ export VAULT_ADDRESS=http://127.0.0.1:8200/
 $ export VAULT_TOKEN=token
 $ export SECRET_PATH=ansiblesafe/example
 $ ansiblesafe -o 4
+$ ansiblesafe -o 1 # Optional encrypt the file
 ```
 
 ## Usage

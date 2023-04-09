@@ -365,7 +365,7 @@ func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secr
     }
 
     if secret == nil {
-        log.Fatal("Error: Secret not found at path %s", secretPath)
+		log.Fatal("Error: Secret not found at path "+secretPath)
     }
 
     // Extract secrets from the retrieved data

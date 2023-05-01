@@ -30,6 +30,7 @@ type Configuration struct {
 	AdminUserPassword   string `yaml:"admin_user_password"`
 	OfflineToken        string `yaml:"offline_token"`
 	OpenShiftPullSecret string `yaml:"openshift_pull_secret"`
+	FreeIpaServerPassword string `yaml:"freeipa_server_admin_password"`
 }
 
 func main() {
@@ -154,6 +155,33 @@ func main() {
 					notice("To deploy and OpenShift envioenment enter the pull secret which can be found at: https://cloud.redhat.com/openshift/install/pull-secret")
 					fmt.Print("Enter OpenShift pull secret: ")
 					fmt.Scanln(&config.OpenShiftPullSecret)
+				}
+
+				fmt.Print("Would you like to enter an FreeIPA password? (y/n): ")
+				var ipa_response string
+				fmt.Scanln(&ipa_response)
+
+				if strings.ToLower(response) == "y" {
+					for {
+						fmt.Print("Enter the admin password to be used to for FreeIPA: ")
+						freeipa_adminPassword, err := gopass.GetPasswdMasked()
+						if err != nil {
+							log.Fatalf("Error reading password: %s", err)
+						}
+						config.FreeIpaServerPassword = string(freeipa_adminPassword)
+	
+						fmt.Print("Confirm FreeIPA admin password: ")
+						confirm_freeipa_Password, err := gopass.GetPasswdMasked()
+						if err != nil {
+							log.Fatalf("Error reading password: %s", err)
+						}
+	
+						if config.FreeIpaServerPassword == string(confirm_freeipa_Password) {
+							break
+						}
+						fmt.Println("Passwords do not match. Please try again.")
+					}
+	
 				}
 
 				configData, err := yaml.Marshal(config)
@@ -294,6 +322,7 @@ func main() {
 		secretData["admin_user_password"] = config.AdminUserPassword
 		secretData["offline_token"] = config.OfflineToken
 		secretData["openshift_pull_secret"] = config.OpenShiftPullSecret
+		secretData["freeipa_server_admin_password"] = config.FreeIpaServerPassword
 	
 		secretPath := os.Getenv("SECRET_PATH")
 		if secretPath == "" {
@@ -377,6 +406,7 @@ func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secr
         AdminUserPassword:   secret.Data["admin_user_password"].(string),
         OfflineToken:        secret.Data["offline_token"].(string),
         OpenShiftPullSecret: secret.Data["openshift_pull_secret"].(string),
+		FreeIpaServerPassword: secret.Data["freeipa_server_admin_password"].(string),
     }
 
     // Marshal secrets to YAML data

@@ -43,6 +43,7 @@ rhsm_activationkey: activationkey
 admin_user_password: password
 offline_token: offlinetoken
 openshift_pull_secret: pullsecret
+freeipa_server_admin_password: password
 ```
 
 ## Quick Start 

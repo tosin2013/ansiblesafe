@@ -49,8 +49,8 @@ freeipa_server_admin_password: password
 ## Quick Start 
 ```
 dnf install ansible-core -y 
-curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.6/ansiblesafe-v0.0.6-linux-amd64.tar.gz
-tar -zxvf ansiblesafe-v0.0.6-linux-amd64.tar.gz
+curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.7/ansiblesafe-v0.0.7-linux-amd64.tar.gz
+tar -zxvf ansiblesafe-v0.0.7-linux-amd64.tar.gz
 chmod +x ansiblesafe-linux-amd64 
 sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
 ```

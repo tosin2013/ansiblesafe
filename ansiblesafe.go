@@ -23,17 +23,19 @@ import (
 )
 
 type Configuration struct {
-	RhsmUsername        string `yaml:"rhsm_username"`
-	RhsmPassword        string `yaml:"rhsm_password"`
-	RhsmOrg             string `yaml:"rhsm_org"`
-	RhsmActivationKey   string `yaml:"rhsm_activationkey"`
-	AdminUserPassword   string `yaml:"admin_user_password"`
-	OfflineToken        string `yaml:"offline_token"`
-	OpenShiftPullSecret string `yaml:"openshift_pull_secret"`
+	RhsmUsername          string `yaml:"rhsm_username"`
+	RhsmPassword          string `yaml:"rhsm_password"`
+	RhsmOrg               string `yaml:"rhsm_org"`
+	RhsmActivationKey     string `yaml:"rhsm_activationkey"`
+	AdminUserPassword     string `yaml:"admin_user_password"`
+	OfflineToken          string `yaml:"offline_token"`
+	OpenShiftPullSecret   string `yaml:"openshift_pull_secret"`
 	FreeIpaServerPassword string `yaml:"freeipa_server_admin_password"`
 }
 
 func main() {
+	// Add the additional location to the PATH environment variable
+	os.Setenv("PATH", os.Getenv("PATH")+":/usr/local/bin/")
 	_, err := exec.LookPath("ansible-vault")
 	if err != nil {
 		log.Fatalf("Error: ansible-vault CLI is not installed. Please install it before using this script.")
@@ -67,7 +69,7 @@ func main() {
 		if secretPath == "" {
 			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
 		}
-		
+
 		readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
 		os.Exit(0)
 	}
@@ -169,19 +171,19 @@ func main() {
 							log.Fatalf("Error reading password: %s", err)
 						}
 						config.FreeIpaServerPassword = string(freeipa_adminPassword)
-	
+
 						fmt.Print("Confirm FreeIPA admin password: ")
 						confirm_freeipa_Password, err := gopass.GetPasswdMasked()
 						if err != nil {
 							log.Fatalf("Error reading password: %s", err)
 						}
-	
+
 						if config.FreeIpaServerPassword == string(confirm_freeipa_Password) {
 							break
 						}
 						fmt.Println("Passwords do not match. Please try again.")
 					}
-	
+
 				}
 
 				configData, err := yaml.Marshal(config)
@@ -204,7 +206,7 @@ func main() {
 		fmt.Println("2. Decrypt vault.yml file")
 		fmt.Println("3. Write secrets to HashiCorp Vault")
 		fmt.Println("4. Read secrets from HashiCorp Vault")
-        fmt.Println("5. Skip file encryption/decryption")
+		fmt.Println("5. Skip file encryption/decryption")
 		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 		notice("Please choose an option: ")
 
@@ -262,7 +264,7 @@ func main() {
 		}
 		if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
 			if vaultPathMissing == true {
-				fmt.Println("Encrypting file..."+password)
+				fmt.Println("Encrypting file..." + password)
 				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q)", filePath, password)
 			} else {
 				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=%s --encrypt-vault-id default", filePath, vaultPath)
@@ -288,7 +290,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error unmarshalling YAML data: %s", err)
 		}
-	
+
 		// Initialize a Vault client
 
 		vaultConfig := api.DefaultConfig()
@@ -309,10 +311,9 @@ func main() {
 			log.Fatalf("Error: VAULT_TOKEN environment variable is not set.")
 		}
 
-	
 		// Authenticate with the token
 		vaultClient.SetToken(vaultToken)
-	
+
 		// Write secrets to Vault
 		secretData := make(map[string]interface{})
 		secretData["rhsm_username"] = config.RhsmUsername
@@ -323,7 +324,7 @@ func main() {
 		secretData["offline_token"] = config.OfflineToken
 		secretData["openshift_pull_secret"] = config.OpenShiftPullSecret
 		secretData["freeipa_server_admin_password"] = config.FreeIpaServerPassword
-	
+
 		secretPath := os.Getenv("SECRET_PATH")
 		if secretPath == "" {
 			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
@@ -335,10 +336,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error writing secret to Vault: %s", err)
 		}
-		
-	
+
 		fmt.Println("Secrets written to Vault successfully.")
-	}  else if choice == 4 {
+	} else if choice == 4 {
 		vaultAddress := os.Getenv("VAULT_ADDRESS")
 		if vaultAddress == "" {
 			log.Fatalf("Error: VAULT_ADDRESS environment variable is not set.")
@@ -353,7 +353,7 @@ func main() {
 			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
 		}
 		readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
-	}  else if choice == 5 {
+	} else if choice == 5 {
 		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 		notice("Skipping file encryption.")
 	} else {
@@ -371,56 +371,56 @@ func main() {
 }
 
 func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath string) error {
-    // Read secrets from HashiCorp Vault
-	fmt.Println("Current file path is: "+filePath)
-    vaultConfig := api.DefaultConfig()
-    vaultConfig.Address = vaultAddress
-    vaultConfig.Timeout = 10 * time.Second
-    vaultClient, err := api.NewClient(vaultConfig)
-    if err != nil {
-        return fmt.Errorf("Error creating Vault client: %w", err)
-    }
+	// Read secrets from HashiCorp Vault
+	fmt.Println("Current file path is: " + filePath)
+	vaultConfig := api.DefaultConfig()
+	vaultConfig.Address = vaultAddress
+	vaultConfig.Timeout = 10 * time.Second
+	vaultClient, err := api.NewClient(vaultConfig)
+	if err != nil {
+		return fmt.Errorf("Error creating Vault client: %w", err)
+	}
 
-    // Authenticate with the token
-    vaultClient.SetToken(vaultToken)
+	// Authenticate with the token
+	vaultClient.SetToken(vaultToken)
 
-    // Read secrets from Vault
-    ctx := context.Background()
-    kv2 := vaultClient.KVv2("ansiblesafe")
+	// Read secrets from Vault
+	ctx := context.Background()
+	kv2 := vaultClient.KVv2("ansiblesafe")
 
-    secret, err := kv2.Get(ctx, secretPath)
-    if err != nil {
-        log.Fatal("Error retrieving secret from Vault: %w", err)
-    }
+	secret, err := kv2.Get(ctx, secretPath)
+	if err != nil {
+		log.Fatal("Error retrieving secret from Vault: %w", err)
+	}
 
-    if secret == nil {
-		log.Fatal("Error: Secret not found at path "+secretPath)
-    }
+	if secret == nil {
+		log.Fatal("Error: Secret not found at path " + secretPath)
+	}
 
-    // Extract secrets from the retrieved data
-    config := Configuration{
-        RhsmUsername:        secret.Data["rhsm_username"].(string),
-        RhsmPassword:        secret.Data["rhsm_password"].(string),
-        RhsmOrg:             secret.Data["rhsm_org"].(string),
-        RhsmActivationKey:   secret.Data["rhsm_activationkey"].(string),
-        AdminUserPassword:   secret.Data["admin_user_password"].(string),
-        OfflineToken:        secret.Data["offline_token"].(string),
-        OpenShiftPullSecret: secret.Data["openshift_pull_secret"].(string),
+	// Extract secrets from the retrieved data
+	config := Configuration{
+		RhsmUsername:          secret.Data["rhsm_username"].(string),
+		RhsmPassword:          secret.Data["rhsm_password"].(string),
+		RhsmOrg:               secret.Data["rhsm_org"].(string),
+		RhsmActivationKey:     secret.Data["rhsm_activationkey"].(string),
+		AdminUserPassword:     secret.Data["admin_user_password"].(string),
+		OfflineToken:          secret.Data["offline_token"].(string),
+		OpenShiftPullSecret:   secret.Data["openshift_pull_secret"].(string),
 		FreeIpaServerPassword: secret.Data["freeipa_server_admin_password"].(string),
-    }
+	}
 
-    // Marshal secrets to YAML data
-    configData, err := yaml.Marshal(config)
-    if err != nil {
-        log.Fatal("Error marshaling YAML data: %w", err)
-    }
+	// Marshal secrets to YAML data
+	configData, err := yaml.Marshal(config)
+	if err != nil {
+		log.Fatal("Error marshaling YAML data: %w", err)
+	}
 
-    // Write secrets to YAML file
-    err = ioutil.WriteFile(filePath, configData, 0644)
-    if err != nil {
-        log.Fatal("Error writing vault file: %w", err)
-    }
-    fmt.Println("Secrets read from Vault and written to file successfully.")
+	// Write secrets to YAML file
+	err = ioutil.WriteFile(filePath, configData, 0644)
+	if err != nil {
+		log.Fatal("Error writing vault file: %w", err)
+	}
+	fmt.Println("Secrets read from Vault and written to file successfully.")
 
-    return nil
+	return nil
 }

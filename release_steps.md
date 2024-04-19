@@ -2,7 +2,7 @@
 
 Create Relase
 ```
-TAG=0.0.7
+TAG=0.0.8
 git tag -a v${TAG} -m "Creating v${TAG} release"
 git push origin v${TAG}
 ```

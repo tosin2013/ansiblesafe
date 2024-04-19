@@ -6,6 +6,7 @@ ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML
 
 ![20230211185054](https://i.imgur.com/gsItHDF.png)
 
+
 ## Features
 * Generate ansible vault files to be used for playbooks 
 * Pull secrets from HashiCorp Vault and create ansible vault files
@@ -42,6 +43,7 @@ rhsm_org: orgid
 rhsm_activationkey: activationkey
 admin_user_password: password
 offline_token: offlinetoken
+automation_hub_offline_token: automationhubtoken
 openshift_pull_secret: pullsecret
 freeipa_server_admin_password: password
 ```
@@ -49,8 +51,8 @@ freeipa_server_admin_password: password
 ## Quick Start 
 ```
 dnf install ansible-core -y 
-curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.7/ansiblesafe-v0.0.7-linux-amd64.tar.gz
-tar -zxvf ansiblesafe-v0.0.7-linux-amd64.tar.gz
+curl -OL https://github.com/tosin2013/ansiblesafe/releases/download/v0.0.8/ansiblesafe-v0.0.8-linux-amd64.tar.gz
+tar -zxvf ansiblesafe-v0.0.8-linux-amd64.tar.gz
 chmod +x ansiblesafe-linux-amd64 
 sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
 ```
@@ -110,6 +112,9 @@ cd ansiblesafe
 ``` 
 go run ansiblesafe.go
 ```
+
+## Documentation 
+[Ansible Vault Secrets Documentation](https://dev.to/tosin2013/ansible-vault-secrets-documentation-3g1a)
 
 ## Contributing
 This project is open source and contributions are welcome! If you have any suggestions or bug reports, please open an issue or create a pull request.

@@ -23,14 +23,15 @@ import (
 )
 
 type Configuration struct {
-	RhsmUsername          string `yaml:"rhsm_username"`
-	RhsmPassword          string `yaml:"rhsm_password"`
-	RhsmOrg               string `yaml:"rhsm_org"`
-	RhsmActivationKey     string `yaml:"rhsm_activationkey"`
-	AdminUserPassword     string `yaml:"admin_user_password"`
-	OfflineToken          string `yaml:"offline_token"`
-	OpenShiftPullSecret   string `yaml:"openshift_pull_secret"`
-	FreeIpaServerPassword string `yaml:"freeipa_server_admin_password"`
+	RhsmUsername              string `yaml:"rhsm_username"`
+	RhsmPassword              string `yaml:"rhsm_password"`
+	RhsmOrg                   string `yaml:"rhsm_org"`
+	RhsmActivationKey         string `yaml:"rhsm_activationkey"`
+	AdminUserPassword         string `yaml:"admin_user_password"`
+	OfflineToken              string `yaml:"offline_token"`
+	AutomationHubOfflineToken string `yaml:"automation_hub_offline_token"`
+	OpenShiftPullSecret       string `yaml:"openshift_pull_secret"`
+	FreeIpaServerPassword     string `yaml:"freeipa_server_admin_password"`
 }
 
 func main() {
@@ -147,6 +148,16 @@ func main() {
 				fmt.Print("Enter your Offline Token: ")
 				fmt.Scanln(&config.OfflineToken)
 
+				fmt.Print("Would you like to enter an Automation Hub Offline Token? (y/n): ")
+				var hub_response string
+				fmt.Scanln(&hub_response)
+
+				if strings.ToLower(hub_response) == "y" {
+					notice("Automation Hub Offline Token can be found at https://console.redhat.com/ansible/automation-hub/token")
+					fmt.Print("Enter Automation Hub Offline Token: ")
+					fmt.Scanln(&config.AutomationHubOfflineToken)
+				}
+
 				//var pullSecret string
 
 				fmt.Print("Would you like to enter an OpenShift pull secret? (y/n): ")
@@ -154,7 +165,7 @@ func main() {
 				fmt.Scanln(&response)
 
 				if strings.ToLower(response) == "y" {
-					notice("To deploy and OpenShift envioenment enter the pull secret which can be found at: https://cloud.redhat.com/openshift/install/pull-secret")
+					notice("To deploy and OpenShift enviornment enter the pull secret which can be found at: https://cloud.redhat.com/openshift/install/pull-secret")
 					fmt.Print("Enter OpenShift pull secret: ")
 					fmt.Scanln(&config.OpenShiftPullSecret)
 				}
@@ -322,6 +333,7 @@ func main() {
 		secretData["rhsm_activationkey"] = config.RhsmActivationKey
 		secretData["admin_user_password"] = config.AdminUserPassword
 		secretData["offline_token"] = config.OfflineToken
+		secretData["automation_hub_offline_token"] = config.AutomationHubOfflineToken
 		secretData["openshift_pull_secret"] = config.OpenShiftPullSecret
 		secretData["freeipa_server_admin_password"] = config.FreeIpaServerPassword
 

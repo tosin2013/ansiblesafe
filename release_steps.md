@@ -9,7 +9,7 @@ git push origin v${TAG}
 
 Delete Release
 ```
-TAG=0.0.7
+TAG=0.0.8
 git tag -d v${TAG}
 git push origin --delete v${TAG}
 ```

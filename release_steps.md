@@ -1,6 +1,6 @@
 # Tagging instructions
 
-Create Relase
+Create Release
 ```
 TAG=0.0.8
 git tag -a v${TAG} -m "Creating v${TAG} release"

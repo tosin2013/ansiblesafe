@@ -34,15 +34,25 @@ type Configuration struct {
 	FreeIpaServerPassword     string `yaml:"freeipa_server_admin_password"`
 }
 
+func findAnsibleVault() (string, error) {
+	// Look for 'ansible-vault' in the PATH environment variable
+	vaultPath, err := exec.LookPath("ansible-vault")
+	if err != nil {
+		// If the executable is not found, return an error
+		return "", fmt.Errorf("ansible-vault not found in PATH. Please install it before using this script")
+	}
+	return vaultPath, nil
+}
+
 func main() {
 	// Add the additional location to the PATH environment variable
-	os.Setenv("PATH", os.Getenv("PATH")+":/usr/local/bin/")
-	_, err := exec.LookPath("ansible-vault")
+	vaultPath, err := findAnsibleVault()
 	if err != nil {
-		log.Fatalf("Error: ansible-vault CLI is not installed. Please install it before using this script.")
+		log.Fatalf("Error: %s", err)
 	}
+
+	fmt.Printf("ansible-vault found at: %s\n", vaultPath)
 	var filePath string
-	var vaultPath string
 	var choice int
 
 	pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")

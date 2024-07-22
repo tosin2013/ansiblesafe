@@ -15,12 +15,11 @@ jobs:
       with:
         go-version: 1.17
 
-    - name: Print ansible-vault version
-      run: ansible-vault --version
-
     - name: Install Ansible Vault 
       run: pip3 install ansible-vault
 
+    - name: Print ansible-vault version
+      run: ansible-vault --version
 
     - name: Build Go application
       run: go build -o ansiblesafe .

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  release:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
@@ -15,6 +15,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
 
       - name: Build project
         run: |
@@ -32,6 +37,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.VERSION }}
           body_path: build/CHANGELOG.md
           files: build/ansiblesafe-*.tar.gz
         env:

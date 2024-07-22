@@ -44,8 +44,14 @@ jobs:
         freeipa_server_admin_password: password
         EOF
 
-    - name: Run tests
+    - name: Run encrypt tests
       run: |
         ./ansiblesafe -f ~/vault.yml -o 1
+
+    - name: Run decrypt tests
+      run: |
         ./ansiblesafe -f ~/vault.yml -o 2
+    
+    - name: Run skip encrypting/decrypting tests
+      run: |
         ./ansiblesafe -f ~/vault.yml -o 5

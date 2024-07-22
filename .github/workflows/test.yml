@@ -71,4 +71,4 @@ jobs:
         git config --global user.email 'github-actions@github.com'
         TAG=$LATEST_TAG
         git tag -a ${TAG} -m "Creating ${TAG} release"
-        git push origin v${TAG}
+        git push origin ${TAG}

@@ -385,7 +385,10 @@ func main() {
 	cmd := exec.Command("bash", "-c", vaultCommand)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("Error executing vault command: %s", err)
+		log.Printf("Error executing vault command: %s", err)
+		log.Printf("Command: %s", vaultCommand)
+		log.Printf("Output: %s", string(output))
+		log.Fatalf("Failed to execute vault command")
 	}
 
 	fmt.Println(string(output))

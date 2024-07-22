@@ -43,14 +43,6 @@ jobs:
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "Latest tag is: $LATEST_TAG"
 
-      - name: Tag and push release
-        if: startsWith(github.ref, 'refs/heads/')
-        run: |
-          echo "Tagging and pushing release..."
-          git tag -a $LATEST_TAG -m "Creating $LATEST_TAG release"
-          git push origin $LATEST_TAG
-          echo "Tag $LATEST_TAG pushed to origin"
-
       - name: Build project
         run: |
           make all

@@ -5,11 +5,19 @@ on:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to release (e.g., v1.2.3). Leave empty to auto-increment.'
+        required: false
+        default: ''
 
 jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    env:
+      LATEST_TAG: ${{ github.event.inputs.version }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,6 +28,28 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
+
+      - name: Determine version
+        id: determine_version
+        run: |
+          if [ -z "${{ env.LATEST_TAG }}" ]; then
+            echo "No version provided. Fetching the latest tag and incrementing."
+            chmod +x ./increment_tag.sh
+            LATEST_TAG=$(./increment_tag.sh)
+          else
+            echo "Using provided version: ${{ env.LATEST_TAG }}"
+            LATEST_TAG=${{ env.LATEST_TAG }}
+          fi
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "Latest tag is: $LATEST_TAG"
+
+      - name: Tag and push release
+        if: startsWith(github.ref, 'refs/heads/')
+        run: |
+          echo "Tagging and pushing release..."
+          git tag -a $LATEST_TAG -m "Creating $LATEST_TAG release"
+          git push origin $LATEST_TAG
+          echo "Tag $LATEST_TAG pushed to origin"
 
       - name: Build project
         run: |

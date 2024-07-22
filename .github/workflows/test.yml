@@ -23,9 +23,9 @@ jobs:
 
     - name: Create vault password file
       run: |
-        echo "echo 'dummy_password' > ~/.vault_password" > ansible_vault_setup.sh
+        echo 'dummy_password' > ~/.vault_password"
         chmod +x ansible_vault_setup.sh
-        ./ansible_vault_setup.sh
+        ./ansible_vault_setup.sh || exit $?
 
     - name: Build Go application
       run: go build -o ansiblesafe .

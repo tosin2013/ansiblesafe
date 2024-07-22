@@ -286,7 +286,7 @@ func main() {
 		if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
 			if vaultPathMissing == true {
 				fmt.Println("Encrypting file..." + password)
-				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q)", filePath, password)
+				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q) --encrypt-vault-id default", filePath, password)
 			} else {
 				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=%s --encrypt-vault-id default", filePath, vaultPath)
 			}
@@ -295,7 +295,7 @@ func main() {
 		}
 	} else if choice == 2 {
 		if vaultPathMissing == true {
-			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q)", filePath, password)
+			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q) --encrypt-vault-id default", filePath, password)
 		} else {
 			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=%s", filePath, vaultPath)
 		}

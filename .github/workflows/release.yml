@@ -27,7 +27,7 @@ jobs:
 
       - name: Generate Changelog
         run: |
-          VERSION=$(hack/release_version.sh)
+          VERSION=${{ env.LATEST_TAG }}
           hack/changelog.sh $VERSION > build/CHANGELOG.md
           echo "VERSION=$VERSION"
           ls -R build
@@ -37,7 +37,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }}
+          tag_name: ${{ env.LATEST_TAG }}
           body_path: build/CHANGELOG.md
           files: build/ansiblesafe-*.tar.gz
         env:

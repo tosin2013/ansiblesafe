@@ -64,6 +64,7 @@ jobs:
         LATEST_TAG=$(hack/version.sh)
         echo "Latest tag is: $LATEST_TAG"
         echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+        echo "VERSION=$LATEST_TAG" >> $GITHUB_ENV
 
     - name: Tag and push release on successful tests
       if: success()

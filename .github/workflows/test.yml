@@ -21,6 +21,12 @@ jobs:
     - name: Print ansible-vault version
       run: ansible-vault --version
 
+    - name: Create vault password file
+      run: |
+        wget -O ansible_vault_setup.sh https://gist.githubusercontent.com/tosin2013/022841d90216df8617244ab6d6aceaf8/raw/92400b9e459351d204feb67b985c08df6477d7fa/ansible_vault_setup.sh
+        chmod +x ansible_vault_setup.sh
+        ./ansible_vault_setup.sh /root/.vault_password
+
     - name: Build Go application
       run: go build -o ansiblesafe .
 

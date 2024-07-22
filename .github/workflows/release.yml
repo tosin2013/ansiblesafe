@@ -20,7 +20,7 @@ jobs:
 
       - name: Generate Changelog
         run: |
-          VERSION=$(hack/version.sh)
+          VERSION=$(hack/release_version.sh)
           hack/changelog.sh $VERSION > build/CHANGELOG.md
           echo "VERSION=$VERSION"
           ls -R build

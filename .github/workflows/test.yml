@@ -1,0 +1,39 @@
+name: Test AnsibleSafe
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Build Go application
+      run: go build -o ansiblesafe .
+
+    - name: Create sample vault.yml
+      run: |
+        cat <<EOF > ~/vault.yml
+        rhsm_username: rheluser
+        rhsm_password: rhelpassword
+        rhsm_org: orgid
+        rhsm_activationkey: activationkey
+        admin_user_password: password
+        offline_token: offlinetoken
+        automation_hub_offline_token: automationhubtoken
+        openshift_pull_secret: pullsecret
+        freeipa_server_admin_password: password
+        EOF
+
+    - name: Run tests
+      run: |
+        ./ansiblesafe -f ~/vault.yml -o 1
+        ./ansiblesafe -f ~/vault.yml -o 2
+        ./ansiblesafe -f ~/vault.yml -o 5

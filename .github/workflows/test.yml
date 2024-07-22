@@ -66,6 +66,8 @@ jobs:
       if: success()
       run: |
         echo "All tests passed. Tagging and pushing release..."
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
         TAG=$LATEST_TAG
         git tag -a v${TAG} -m "Creating v${TAG} release"
         git push origin v${TAG}

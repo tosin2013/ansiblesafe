@@ -8,11 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"time"
-
 	"path/filepath"
-
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/vault/api"
@@ -286,16 +284,16 @@ func main() {
 		if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
 			if vaultPathMissing == true {
 				fmt.Println("Encrypting file..." + password)
-				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q) --encrypt-vault-id default", filePath, password)
+				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=<(echo %q)", filePath, password)
 			} else {
-				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=%s --encrypt-vault-id default", filePath, vaultPath)
+				vaultCommand = fmt.Sprintf("ansible-vault encrypt %s --vault-password-file=%s", filePath, vaultPath)
 			}
 		} else {
 			log.Fatalf("Error: %s is already encrypted.", filePath)
 		}
 	} else if choice == 2 {
 		if vaultPathMissing == true {
-			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q) --encrypt-vault-id default", filePath, password)
+			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=<(echo %q)", filePath, password)
 		} else {
 			vaultCommand = fmt.Sprintf("ansible-vault decrypt %s --vault-password-file=%s", filePath, vaultPath)
 		}

@@ -55,3 +55,17 @@ jobs:
     - name: Run skip encrypting/decrypting tests
       run: |
         ./ansiblesafe -f ~/vault.yml -o 5
+
+    - name: Fetch latest tag and commit information
+      run: |
+        echo "Fetching latest tag and commit information..."
+        LATEST_TAG=$(hack/version.sh)
+        echo "Latest tag is: $LATEST_TAG"
+
+    - name: Tag and push release on successful tests
+      if: success()
+      run: |
+        echo "All tests passed. Tagging and pushing release..."
+        TAG=$LATEST_TAG
+        git tag -a v${TAG} -m "Creating v${TAG} release"
+        git push origin v${TAG}

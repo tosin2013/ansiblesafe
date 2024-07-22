@@ -3,6 +3,7 @@ ansiblesafe is a simple Go script that makes it easy to encrypt and decrypt YAML
 
 ![Build Status](https://github.com/tosin2013/ansiblesafe/actions/workflows/build.yml/badge.svg)
 ![Release Status](https://github.com/tosin2013/ansiblesafe/actions/workflows/release.yml/badge.svg)
+[![Test AnsibleSafe](https://github.com/tosin2013/ansiblesafe/actions/workflows/test.yml/badge.svg)](https://github.com/tosin2013/ansiblesafe/actions/workflows/test.yml)
 
 ![20230211185054](https://i.imgur.com/gsItHDF.png)
 

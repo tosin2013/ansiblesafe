@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
@@ -14,376 +17,363 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/vault/api"
-	"github.com/howeyc/gopass"
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
 )
 
 type Configuration struct {
-	RhsmUsername              string `yaml:"rhsm_username"`
-	RhsmPassword              string `yaml:"rhsm_password"`
-	RhsmOrg                   string `yaml:"rhsm_org"`
-	RhsmActivationKey         string `yaml:"rhsm_activationkey"`
-	AdminUserPassword         string `yaml:"admin_user_password"`
-	OfflineToken              string `yaml:"offline_token"`
-	AutomationHubOfflineToken string `yaml:"automation_hub_offline_token"`
-	OpenShiftPullSecret       string `yaml:"openshift_pull_secret"`
-	FreeIpaServerPassword     string `yaml:"freeipa_server_admin_password"`
-	AwsAccessKey              string `yaml:"aws_access_key"`
-	AwsSecretKey              string `yaml:"aws_secret_key"`
-}
-
-func findAnsibleVault() (string, error) {
-	vaultPath, err := exec.LookPath("ansible-vault")
-	if err != nil {
-		return "", fmt.Errorf("ansible-vault not found in PATH. Please install it before using this script")
-	}
-	return vaultPath, nil
+    RhsmUsername              string `yaml:"rhsm_username"`
+    RhsmPassword              string `yaml:"rhsm_password"`
+    RhsmOrg                   string `yaml:"rhsm_org"`
+    RhsmActivationKey         string `yaml:"rhsm_activationkey"`
+    AdminUserPassword         string `yaml:"admin_user_password"`
+    OfflineToken              string `yaml:"offline_token"`
+    AutomationHubOfflineToken string `yaml:"automation_hub_offline_token"`
+    OpenShiftPullSecret       string `yaml:"openshift_pull_secret"`
+    FreeIpaServerPassword     string `yaml:"freeipa_server_admin_password"`
+    AwsAccessKey              string `yaml:"aws_access_key"`
+    AwsSecretKey              string `yaml:"aws_secret_key"`
 }
 
 func main() {
-	vaultPath, err := findAnsibleVault()
-	if err != nil {
-		log.Fatalf("Error: %s", err)
-	}
+    vaultPath, err := findAnsibleVault()
+    if err != nil {
+        log.Fatalf("Error: %s", err)
+    }
 
-	fmt.Printf("ansible-vault found at: %s\n", vaultPath)
-	var filePath string
-	var choice int
+    fmt.Printf("ansible-vault found at: %s\n", vaultPath)
+    var filePath string
+    var choice int
 
-	pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")
-	pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt, 2: decrypt, 3: Write secrets to HashiCorp Vault, 4: Read secrets from HashiCorp Vault, 5: skip encrypting/decrypting)")
-	pflag.Parse()
+    pflag.StringVarP(&filePath, "file", "f", "", "Path to YAML file (default: $HOME/vault.yml)")
+    pflag.IntVarP(&choice, "operation", "o", 0, "Operation to perform (1: encrypt, 2: decrypt, 3: Write secrets to HashiCorp Vault, 4: Read secrets from HashiCorp Vault, 5: Read secrets from HCP, 6: skip encrypting/decrypting)")
+    pflag.Parse()
 
-	if filePath == "" {
-		usr, err := user.Current()
-		if err != nil {
-			log.Fatalf("Error getting current user: %s", err)
-		}
-		filePath = filepath.Join(usr.HomeDir, "vault.yml")
-	}
+    if filePath == "" {
+        usr, err := user.Current()
+        if err != nil {
+            log.Fatalf("Error getting current user: %s", err)
+        }
+        filePath = filepath.Join(usr.HomeDir, "vault.yml")
+    }
 
-	if choice == 4 {
-		vaultAddress := os.Getenv("VAULT_ADDRESS")
-		if vaultAddress == "" {
-			log.Fatalf("Error: VAULT_ADDRESS environment variable is not set.")
-		}
-		vaultToken := os.Getenv("VAULT_TOKEN")
-		if vaultToken == "" {
-			log.Fatalf("Error: VAULT_TOKEN environment variable is not set.")
-		}
-		secretPath := os.Getenv("SECRET_PATH")
-		if secretPath == "" {
-			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
-		}
+    // Handle operations based on choice
+    switch choice {
+    case 1:
+        encryptFile(filePath, vaultPath)
+    case 2:
+        decryptFile(filePath, vaultPath)
+    case 3:
+        writeSecretsToVault(filePath)
+    case 4:
+        readSecretsFromVault(filePath)
+    case 5:
+        readSecretsFromHCP(filePath)
+    case 6:
+        fmt.Println("Skipping file encryption/decryption")
+    default:
+        fmt.Println("1. Encrypt vault.yml file")
+        fmt.Println("2. Decrypt vault.yml file")
+        fmt.Println("3. Write secrets to HashiCorp Vault")
+        fmt.Println("4. Read secrets from HashiCorp Vault")
+        fmt.Println("5. Read secrets from HCP")
+        fmt.Println("6. Skip file encryption/decryption")
+        notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
+        notice("Please choose an option: ")
+        fmt.Scanln(&choice)
+    }
+}
 
-		readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
-		os.Exit(0)
-	}
+func findAnsibleVault() (string, error) {
+    vaultPath, err := exec.LookPath("ansible-vault")
+    if err != nil {
+        return "", fmt.Errorf("ansible-vault not found in PATH. Please install it before using this script")
+    }
+    return vaultPath, nil
+}
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		var config Configuration
+func encryptFile(filePath, vaultPath string) {
+    fileBytes, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        log.Fatalf("Error reading file %s: %s", filePath, err)
+    }
+    if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
+        vaultCommand := fmt.Sprintf("ansible-vault encrypt %s", filePath)
+        executeCommand(vaultCommand)
+    } else {
+        log.Fatalf("Error: %s is already encrypted.", filePath)
+    }
+}
 
-		var rootCmd = &cobra.Command{
-			Use:   "ansiblesafe",
-			Short: "Generate a YAML configuration file",
-			Long: `ansiblesafe is a simple command line tool for generating a YAML configuration file with common Red Hat credentials.
-				
-				This tool provides an interactive menu option for the user to input the values for  common Red Hat credentials.`,
-			Run: func(cmd *cobra.Command, args []string) {
-				notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
-				notice("Please enter the following to generate your vault.yml file:")
-				fmt.Print("Enter your RHSM username: ")
-				fmt.Scanln(&config.RhsmUsername)
+func decryptFile(filePath, vaultPath string) {
+    vaultCommand := fmt.Sprintf("ansible-vault decrypt %s", filePath)
+    executeCommand(vaultCommand)
+}
 
-				for {
-					fmt.Print("Enter your RHSM password : ")
-					rhsmPassword, err := gopass.GetPasswdMasked()
-					if err != nil {
-						log.Fatalf("Error reading password: %s", err)
-					}
-					config.RhsmPassword = string(rhsmPassword)
+func writeSecretsToVault(filePath string) {
+    configData, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        log.Fatalf("Error reading file %s: %s", filePath, err)
+    }
 
-					fmt.Print("Confirm RHSM password: ")
-					confirmPassword, err := gopass.GetPasswdMasked()
-					if err != nil {
-						log.Fatalf("Error reading password: %s", err)
-					}
+    var config Configuration
+    err = yaml.Unmarshal(configData, &config)
+    if err != nil {
+        log.Fatalf("Error unmarshalling YAML data: %s", err)
+    }
 
-					if config.RhsmPassword == string(confirmPassword) {
-						break
-					}
-					fmt.Println("Passwords do not match. Please try again.")
-				}
+    vaultAddress := os.Getenv("VAULT_ADDRESS")
+    vaultToken := os.Getenv("VAULT_TOKEN")
+    secretPath := os.Getenv("SECRET_PATH")
+    validateEnvVars(vaultAddress, vaultToken, secretPath)
 
-				notice("See Creating Red Hat Customer Portal Activation Keys https://access.redhat.com/articles/1378093:")
-				fmt.Print("Enter your RHSM ORG ID: ")
-				fmt.Scanln(&config.RhsmOrg)
+    vaultClient := createVaultClient(vaultAddress, vaultToken)
+    secretData := map[string]interface{}{
+        "rhsm_username":                config.RhsmUsername,
+        "rhsm_password":                config.RhsmPassword,
+        "rhsm_org":                     config.RhsmOrg,
+        "rhsm_activationkey":           config.RhsmActivationKey,
+        "admin_user_password":          config.AdminUserPassword,
+        "offline_token":                config.OfflineToken,
+        "automation_hub_offline_token": config.AutomationHubOfflineToken,
+        "openshift_pull_secret":        config.OpenShiftPullSecret,
+        "freeipa_server_admin_password": config.FreeIpaServerPassword,
+        "aws_access_key":               config.AwsAccessKey,
+        "aws_secret_key":               config.AwsSecretKey,
+    }
 
-				fmt.Print("Enter your RHSM activation key: ")
-				fmt.Scanln(&config.RhsmActivationKey)
+    ctx := context.Background()
+    kv2 := vaultClient.KVv2("ansiblesafe")
+    _, err = kv2.Put(ctx, secretPath, secretData)
+    if err != nil {
+        log.Fatalf("Error writing secret to Vault: %s", err)
+    }
 
-				notice("Enter Admin password for VMs. This password will be used to access the VMs via SSH.")
-				for {
-					fmt.Print("Enter the admin password to be used to access VMs: ")
-					adminPassword, err := gopass.GetPasswdMasked()
-					if err != nil {
-						log.Fatalf("Error reading password: %s", err)
-					}
-					config.AdminUserPassword = string(adminPassword)
+    fmt.Println("Secrets written to Vault successfully.")
+}
 
-					fmt.Print("Confirm admin password: ")
-					confirmPassword, err := gopass.GetPasswdMasked()
-					if err != nil {
-						log.Fatalf("Error reading password: %s", err)
-					}
+func readSecretsFromVault(filePath string) {
+    vaultAddress := os.Getenv("VAULT_ADDRESS")
+    vaultToken := os.Getenv("VAULT_TOKEN")
+    secretPath := os.Getenv("SECRET_PATH")
+    validateEnvVars(vaultAddress, vaultToken, secretPath)
 
-					if config.AdminUserPassword == string(confirmPassword) {
-						break
-					}
-					fmt.Println("Passwords do not match. Please try again.")
-				}
+    readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
+}
 
-				notice("Offline token not found you can find it at: https://access.redhat.com/management/api")
-				fmt.Print("Enter your Offline Token: ")
-				fmt.Scanln(&config.OfflineToken)
+func readSecretsFromHCP(filePath string) {
+    hcpClientID := os.Getenv("HCP_CLIENT_ID")
+    hcpClientSecret := os.Getenv("HCP_CLIENT_SECRET")
+    organizationID := os.Getenv("HCP_ORG_ID")
+    projectID := os.Getenv("HCP_PROJECT_ID")
+    appName := os.Getenv("APP_NAME")
+    if hcpClientID == "" || hcpClientSecret == "" || organizationID == "" || projectID == "" || appName == "" {
+        log.Fatalf("HCP_CLIENT_ID, HCP_CLIENT_SECRET, HCP_ORG_ID, HCP_PROJECT_ID, and APP_NAME must be set.")
+    }
 
-				fmt.Print("Would you like to enter an Automation Hub Offline Token? (y/n): ")
-				var hub_response string
-				fmt.Scanln(&hub_response)
+    token, err := getHCPAPIToken(hcpClientID, hcpClientSecret)
+    if err != nil {
+        log.Fatalf("Error retrieving HCP API token: %s", err)
+    }
 
-				if strings.ToLower(hub_response) == "y" {
-					notice("Automation Hub Offline Token can be found at https://console.redhat.com/ansible/automation-hub/token")
-					fmt.Print("Enter Automation Hub Offline Token: ")
-					fmt.Scanln(&config.AutomationHubOfflineToken)
-				}
+    secrets, err := getHCPSecrets(token, organizationID, projectID, appName)
+    if err != nil {
+        log.Fatalf("Error retrieving HCP secrets: %s", err)
+    }
 
-				fmt.Print("Would you like to enter an OpenShift pull secret? (y/n): ")
-				var response string
-				fmt.Scanln(&response)
+    err = ioutil.WriteFile(filePath, secrets, 0644)
+    if err != nil {
+        log.Fatalf("Error writing secrets to file: %s", err)
+    }
 
-				if strings.ToLower(response) == "y" {
-					notice("To deploy and OpenShift environment enter the pull secret which can be found at: https://cloud.redhat.com/openshift/install/pull-secret")
-					fmt.Print("Enter OpenShift pull secret: ")
-					fmt.Scanln(&config.OpenShiftPullSecret)
-				}
+    fmt.Println("Secrets read from HCP and written to file successfully.")
+}
 
-				fmt.Print("Would you like to enter an FreeIPA password? (y/n): ")
-				var ipa_response string
-				fmt.Scanln(&ipa_response)
 
-				if strings.ToLower(ipa_response) == "y" {
-					for {
-						fmt.Print("Enter the admin password to be used to for FreeIPA: ")
-						freeipa_adminPassword, err := gopass.GetPasswdMasked()
-						if err != nil {
-							log.Fatalf("Error reading password: %s", err)
-						}
-						config.FreeIpaServerPassword = string(freeipa_adminPassword)
+func executeCommand(command string) {
+    cmd := exec.Command("bash", "-c", command)
+    cmd.Env = append(os.Environ(), "ANSIBLE_VAULT_PASSWORD_FILE="+os.Getenv("HOME")+"/.vault_password")
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Printf("Error executing vault command: %s", err)
+        log.Printf("Command: %s", command)
+        log.Printf("Output: %s", string(output))
+        log.Fatalf("Failed to execute vault command")
+    }
+    fmt.Println(string(output))
+}
 
-						fmt.Print("Confirm FreeIPA admin password: ")
-						confirm_freeipa_Password, err := gopass.GetPasswdMasked()
-						if err != nil {
-							log.Fatalf("Error reading password: %s", err)
-						}
+func validateEnvVars(vaultAddress, vaultToken, secretPath string) {
+    if vaultAddress == "" {
+        log.Fatalf("Error: VAULT_ADDRESS environment variable is not set.")
+    }
+    if vaultToken == "" {
+        log.Fatalf("Error: VAULT_TOKEN environment variable is not set.")
+    }
+    if secretPath == "" {
+        log.Fatalf("Error: SECRET_PATH environment variable is not set.")
+    }
+}
 
-						if config.FreeIpaServerPassword == string(confirm_freeipa_Password) {
-							break
-						}
-						fmt.Println("Passwords do not match. Please try again.")
-					}
-					fmt.Print("Enter your AWS Access Key (optional): ")
-					fmt.Scanln(&config.AwsAccessKey)
-
-					fmt.Print("Enter your AWS Secret Key (optional): ")
-					awsSecret, err := gopass.GetPasswdMasked()
-					if err != nil {
-						log.Fatalf("Error reading password: %s", err)
-					}
-					config.AwsSecretKey = string(awsSecret)
-
-				}
-
-				configData, err := yaml.Marshal(config)
-				if err != nil {
-					log.Fatalf("Error marshaling YAML data: %s", err)
-				}
-				err = ioutil.WriteFile(filePath, configData, 0644)
-				if err != nil {
-					log.Fatalf("Error writing vault file: %s", err)
-				}
-
-				fmt.Println("Configuration file generated successfully.")
-			},
-		}
-
-		rootCmd.Execute()
-	}
-	if choice == 0 {
-		fmt.Println("1. Encrypt vault.yml file")
-		fmt.Println("2. Decrypt vault.yml file")
-		fmt.Println("3. Write secrets to HashiCorp Vault")
-		fmt.Println("4. Read secrets from HashiCorp Vault")
-		fmt.Println("5. Skip file encryption/decryption")
-		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
-		notice("Please choose an option: ")
-
-		fmt.Scanln(&choice)
-	}
-
-	var vaultCommand string
-	if choice == 1 {
-		fileBytes, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			log.Fatalf("Error reading file %s: %s", filePath, err)
-		}
-		if !strings.Contains(string(fileBytes), "ANSIBLE_VAULT") {
-			vaultCommand = fmt.Sprintf("ansible-vault encrypt %s", filePath)
-		} else {
-			log.Fatalf("Error: %s is already encrypted.", filePath)
-		}
-	} else if choice == 2 {
-		vaultCommand = fmt.Sprintf("ansible-vault decrypt %s", filePath)
-	} else if choice == 3 {
-		configData, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			log.Fatalf("Error reading file %s: %s", filePath, err)
-		}
-
-		var config Configuration
-		err = yaml.Unmarshal(configData, &config)
-		if err != nil {
-			log.Fatalf("Error unmarshalling YAML data: %s", err)
-		}
-
-		vaultConfig := api.DefaultConfig()
-		vaultAddress := os.Getenv("VAULT_ADDRESS")
-		if vaultAddress == "" {
-			log.Fatalf("Error: VAULT_ADDRESS environment variable is not set.")
-		}
-		vaultConfig.Address = vaultAddress
-		vaultConfig.Timeout = 10 * time.Second
-		vaultClient, err := api.NewClient(vaultConfig)
-		if err != nil {
-			log.Fatalf("Error creating Vault client: %s", err)
-		}
-
-		vaultToken := os.Getenv("VAULT_TOKEN")
-		if vaultToken == "" {
-			log.Fatalf("Error: VAULT_TOKEN environment variable is not set.")
-		}
-
-		vaultClient.SetToken(vaultToken)
-
-		secretData := make(map[string]interface{})
-		secretData["rhsm_username"] = config.RhsmUsername
-		secretData["rhsm_password"] = config.RhsmPassword
-		secretData["rhsm_org"] = config.RhsmOrg
-		secretData["rhsm_activationkey"] = config.RhsmActivationKey
-		secretData["admin_user_password"] = config.AdminUserPassword
-		secretData["offline_token"] = config.OfflineToken
-		secretData["automation_hub_offline_token"] = config.AutomationHubOfflineToken
-		secretData["openshift_pull_secret"] = config.OpenShiftPullSecret
-		secretData["freeipa_server_admin_password"] = config.FreeIpaServerPassword
-		secretData["aws_access_key"] = config.AwsAccessKey
-		secretData["aws_secret_key"] = config.AwsSecretKey
-
-		secretPath := os.Getenv("SECRET_PATH")
-		if secretPath == "" {
-			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
-		}
-		ctx := context.Background()
-		kv2 := vaultClient.KVv2("ansiblesafe")
-
-		_, err = kv2.Put(ctx, secretPath, secretData)
-		if err != nil {
-			log.Fatalf("Error writing secret to Vault: %s", err)
-		}
-
-		fmt.Println("Secrets written to Vault successfully.")
-	} else if choice == 4 {
-		vaultAddress := os.Getenv("VAULT_ADDRESS")
-		if vaultAddress == "" {
-			log.Fatalf("Error: VAULT_ADDRESS environment variable is not set.")
-		}
-		vaultToken := os.Getenv("VAULT_TOKEN")
-		if vaultToken == "" {
-			log.Fatalf("Error: VAULT_TOKEN environment variable is not set.")
-		}
-		secretPath := os.Getenv("SECRET_PATH")
-		if secretPath == "" {
-			log.Fatalf("Error: SECRET_PATH environment variable is not set.")
-		}
-		readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath)
-	} else if choice == 5 {
-		notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
-		notice("Skipping file encryption.")
-	} else {
-		log.Fatalf("Invalid choice: %d", choice)
-	}
-
-	cmd := exec.Command("bash", "-c", vaultCommand)
-	cmd.Env = append(os.Environ(), "ANSIBLE_VAULT_PASSWORD_FILE="+os.Getenv("HOME")+"/.vault_password")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("Error executing vault command: %s", err)
-		log.Printf("Command: %s", vaultCommand)
-		log.Printf("Output: %s", string(output))
-		log.Fatalf("Failed to execute vault command")
-	}
-
-	fmt.Println(string(output))
-
+func createVaultClient(vaultAddress, vaultToken string) *api.Client {
+    vaultConfig := api.DefaultConfig()
+    vaultConfig.Address = vaultAddress
+    vaultConfig.Timeout = 10 * time.Second
+    vaultClient, err := api.NewClient(vaultConfig)
+    if err != nil {
+        log.Fatalf("Error creating Vault client: %s", err)
+    }
+    vaultClient.SetToken(vaultToken)
+    return vaultClient
 }
 
 func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secretPath string) error {
-	fmt.Println("Current file path is: " + filePath)
-	vaultConfig := api.DefaultConfig()
-	vaultConfig.Address = vaultAddress
-	vaultConfig.Timeout = 10 * time.Second
-	vaultClient, err := api.NewClient(vaultConfig)
-	if err != nil {
-		return fmt.Errorf("Error creating Vault client: %w", err)
-	}
+    vaultClient := createVaultClient(vaultAddress, vaultToken)
 
-	vaultClient.SetToken(vaultToken)
+    ctx := context.Background()
+    kv2 := vaultClient.KVv2("ansiblesafe")
 
-	ctx := context.Background()
-	kv2 := vaultClient.KVv2("ansiblesafe")
+    secret, err := kv2.Get(ctx, secretPath)
+    if err != nil {
+        log.Fatalf("Error retrieving secret from Vault: %v", err)
+    }
 
-	secret, err := kv2.Get(ctx, secretPath)
-	if err != nil {
-		log.Fatalf("Error retrieving secret from Vault: %v", err)
-	}
+    if secret == nil {
+        log.Fatalf("Error: Secret not found at path %s", secretPath)
+    }
 
-	if secret == nil {
-		log.Fatalf("Error: Secret not found at path %s", secretPath)
-	}
+    config := Configuration{
+        RhsmUsername:          secret.Data["rhsm_username"].(string),
+        RhsmPassword:          secret.Data["rhsm_password"].(string),
+        RhsmOrg:               secret.Data["rhsm_org"].(string),
+        RhsmActivationKey:     secret.Data["rhsm_activationkey"].(string),
+        AdminUserPassword:     secret.Data["admin_user_password"].(string),
+        OfflineToken:          secret.Data["offline_token"].(string),
+        OpenShiftPullSecret:   secret.Data["openshift_pull_secret"].(string),
+        FreeIpaServerPassword: secret.Data["freeipa_server_admin_password"].(string),
+        AwsAccessKey:          secret.Data["aws_access_key"].(string),
+        AwsSecretKey:          secret.Data["aws_secret_key"].(string),
+    }
 
-	config := Configuration{
-		RhsmUsername:          secret.Data["rhsm_username"].(string),
-		RhsmPassword:          secret.Data["rhsm_password"].(string),
-		RhsmOrg:               secret.Data["rhsm_org"].(string),
-		RhsmActivationKey:     secret.Data["rhsm_activationkey"].(string),
-		AdminUserPassword:     secret.Data["admin_user_password"].(string),
-		OfflineToken:          secret.Data["offline_token"].(string),
-		OpenShiftPullSecret:   secret.Data["openshift_pull_secret"].(string),
-		FreeIpaServerPassword: secret.Data["freeipa_server_admin_password"].(string),
-		AwsAccessKey:          secret.Data["aws_access_key"].(string),
-		AwsSecretKey:          secret.Data["aws_secret_key"].(string),
-	}
+    configData, err := yaml.Marshal(config)
+    if err != nil {
+        log.Fatalf("Error marshaling YAML data: %v", err)
+    }
 
-	configData, err := yaml.Marshal(config)
-	if err != nil {
-		log.Fatalf("Error marshaling YAML data: %v", err)
-	}
+    err = ioutil.WriteFile(filePath, configData, 0644)
+    if err != nil {
+        log.Fatalf("Error writing vault file: %v", err)
+    }
+    fmt.Println("Secrets read from Vault and written to file successfully.")
 
-	err = ioutil.WriteFile(filePath, configData, 0644)
-	if err != nil {
-		log.Fatalf("Error writing vault file: %v", err)
-	}
-	fmt.Println("Secrets read from Vault and written to file successfully.")
-
-	return nil
+    return nil
 }
+
+func getHCPAPIToken(clientID, clientSecret string) (string, error) {
+    url := "https://auth.idp.hashicorp.com/oauth2/token"
+    data := fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials&audience=https://api.hashicorp.cloud", clientID, clientSecret)
+
+    resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(data))
+    if err != nil {
+        return "", fmt.Errorf("error making request to get HCP API token: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return "", fmt.Errorf("error response from HCP API token endpoint: %s", string(body))
+    }
+
+    var result map[string]interface{}
+    err = json.NewDecoder(resp.Body).Decode(&result)
+    if err != nil {
+        return "", fmt.Errorf("error decoding HCP API token response: %w", err)
+    }
+
+    token, ok := result["access_token"].(string)
+    if !ok {
+        return "", fmt.Errorf("access_token not found in HCP API token response")
+    }
+    return token, nil
+}
+
+func getHCPSecrets(token, organizationID, projectID, appID string) ([]byte, error) {
+    url := fmt.Sprintf("https://api.cloud.hashicorp.com/secrets/2023-06-13/organizations/%s/projects/%s/apps/%s/open", organizationID, projectID, appID)
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return nil, fmt.Errorf("error creating HCP secrets request: %w", err)
+    }
+    req.Header.Set("Authorization", "Bearer "+token)
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("error making request to HCP secrets endpoint: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("error response from HCP secrets endpoint: %s", string(body))
+    }
+
+    // Decode the JSON response into a map
+    var secretResponse struct {
+        Secrets []struct {
+            Name    string `json:"name"`
+            Version struct {
+                Value string `json:"value"`
+            } `json:"version"`
+        } `json:"secrets"`
+    }
+
+    if err := json.NewDecoder(resp.Body).Decode(&secretResponse); err != nil {
+        return nil, fmt.Errorf("error decoding HCP secrets response: %w", err)
+    }
+
+    // Create the configuration object based on the received data
+    config := Configuration{}
+    for _, secret := range secretResponse.Secrets {
+        switch secret.Name {
+        case "rhsm_username":
+            config.RhsmUsername = secret.Version.Value
+        case "rhsm_password":
+            config.RhsmPassword = secret.Version.Value
+        case "rhsm_org":
+            config.RhsmOrg = secret.Version.Value
+        case "rhsm_activationkey":
+            config.RhsmActivationKey = secret.Version.Value
+        case "admin_user_password":
+            config.AdminUserPassword = secret.Version.Value
+        case "offline_token":
+            config.OfflineToken = secret.Version.Value
+        case "automation_hub_offline_token":
+            config.AutomationHubOfflineToken = secret.Version.Value
+        case "openshift_pull_secret":
+            config.OpenShiftPullSecret = secret.Version.Value
+        case "freeipa_server_admin_password":
+            config.FreeIpaServerPassword = secret.Version.Value
+        case "aws_access_key":
+            config.AwsAccessKey = secret.Version.Value
+        case "aws_secret_key":
+            config.AwsSecretKey = secret.Version.Value
+        }
+    }
+
+    yamlData, err := yaml.Marshal(config)
+    if err != nil {
+        return nil, fmt.Errorf("error marshaling secrets to YAML: %w", err)
+    }
+
+    return yamlData, nil
+}
+
+func getStringValue(data map[string]interface{}, key string) string {
+    if value, ok := data[key]; ok {
+        if strValue, ok := value.(string); ok {
+            return strValue
+        }
+    }
+    return ""
+}
+

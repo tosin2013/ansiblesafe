@@ -192,6 +192,7 @@ func main() {
 							break
 						}
 						fmt.Println("Passwords do not match. Please try again.")
+					}
 					fmt.Print("Enter your AWS Access Key (optional): ")
 					fmt.Scanln(&config.AwsAccessKey)
 

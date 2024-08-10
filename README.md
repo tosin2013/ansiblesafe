@@ -47,6 +47,8 @@ offline_token: offlinetoken
 automation_hub_offline_token: automationhubtoken
 openshift_pull_secret: pullsecret
 freeipa_server_admin_password: password
+aws_access_key: accesskey
+aws_secret_key: secretkey
 ```
 
 ## Quick Start 
@@ -57,6 +59,9 @@ tar -zxvf ansiblesafe-v0.0.8-linux-amd64.tar.gz
 chmod +x ansiblesafe-linux-amd64 
 sudo mv ansiblesafe-linux-amd64 /usr/local/bin/ansiblesafe
 ```
+
+### Handling AWS Keys
+To use AWS keys (`aws_access_key` and `aws_secret_key`) in your Ansible playbooks, ensure they are included in your `vault.yml` file as shown in the "Decrypted Result" section. These keys are crucial for interacting with AWS services and should be handled with the same security measures as other sensitive information.
 
 ## Menu Options 
 **If you do not pass any flags everything wil be auto generated for you**

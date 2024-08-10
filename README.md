@@ -103,6 +103,24 @@ $ ln ~/.vault_password .
 $ export ANSIBLE_VAULT_PASSWORD_FILE=.vault_password
 ```
 
+## Hashicorp Cloud Instructions
+[Logging into HashiCorp Cloud Platform and Setting Up Environment Variables](docs/hashicorp_cloud_setup.md)
+[Setting Up Variables in HashiCorp Cloud Platform (HCP) Vault Secrets](docs/hashicorp_cloud_secret_setup.md)
+[HashiCorp Cloud](https://portal.cloud.hashicorp.com/)
+```
+$ export HCP_CLIENT_ID="your-client-id"
+$ export HCP_CLIENT_SECRET="your-client-secret"
+$ export HCP_ORG_ID=$(hcp profile display --format=json | jq -r .OrganizationID)
+$ export HCP_PROJECT_ID=$(hcp profile display --format=json | jq -r .ProjectID)
+$ export APP_NAME="your-app-name"
+$ ansiblesafe -o 5  --file=vault.yaml
+# Encrypt the file
+$ ansiblesafe -o 1 --file=vault.yaml
+# Decrypt the file
+$ ansiblesafe -o 2 --file=vault.yaml
+```
+
+
 ## Requirements
 * Ansible Vault CLI
 

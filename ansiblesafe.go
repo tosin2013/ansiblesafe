@@ -30,6 +30,8 @@ type Configuration struct {
 	AutomationHubOfflineToken string `yaml:"automation_hub_offline_token"`
 	OpenShiftPullSecret       string `yaml:"openshift_pull_secret"`
 	FreeIpaServerPassword     string `yaml:"freeipa_server_admin_password"`
+	AwsAccessKey              string `yaml:"aws_access_key"`
+	AwsSecretKey              string `yaml:"aws_secret_key"`
 }
 
 func findAnsibleVault() (string, error) {
@@ -190,7 +192,15 @@ func main() {
 							break
 						}
 						fmt.Println("Passwords do not match. Please try again.")
+					fmt.Print("Enter your AWS Access Key (optional): ")
+					fmt.Scanln(&config.AwsAccessKey)
+
+					fmt.Print("Enter your AWS Secret Key (optional): ")
+					awsSecret, err := gopass.GetPasswdMasked()
+					if err != nil {
+						log.Fatalf("Error reading password: %s", err)
 					}
+					config.AwsSecretKey = string(awsSecret)
 
 				}
 
@@ -275,6 +285,8 @@ func main() {
 		secretData["automation_hub_offline_token"] = config.AutomationHubOfflineToken
 		secretData["openshift_pull_secret"] = config.OpenShiftPullSecret
 		secretData["freeipa_server_admin_password"] = config.FreeIpaServerPassword
+		secretData["aws_access_key"] = config.AwsAccessKey
+		secretData["aws_secret_key"] = config.AwsSecretKey
 
 		secretPath := os.Getenv("SECRET_PATH")
 		if secretPath == "" {
@@ -357,6 +369,8 @@ func readSecretsFromVaultAndWriteToFile(filePath, vaultAddress, vaultToken, secr
 		OfflineToken:          secret.Data["offline_token"].(string),
 		OpenShiftPullSecret:   secret.Data["openshift_pull_secret"].(string),
 		FreeIpaServerPassword: secret.Data["freeipa_server_admin_password"].(string),
+		AwsAccessKey:          secret.Data["aws_access_key"].(string),
+		AwsSecretKey:          secret.Data["aws_secret_key"].(string),
 	}
 
 	configData, err := yaml.Marshal(config)

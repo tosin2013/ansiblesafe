@@ -44,6 +44,8 @@ jobs:
         automation_hub_offline_token: automationhubtoken
         openshift_pull_secret: pullsecret
         freeipa_server_admin_password: password
+        aws_access_key: accesskey
+        aws_secret_key: secretkey
         EOF
 
     - name: Run encrypt tests

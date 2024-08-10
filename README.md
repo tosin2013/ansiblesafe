@@ -104,9 +104,9 @@ $ export ANSIBLE_VAULT_PASSWORD_FILE=.vault_password
 ```
 
 ## Hashicorp Cloud Instructions
-[Logging into HashiCorp Cloud Platform and Setting Up Environment Variables](docs/hashicorp_cloud_setup.md)
-[Setting Up Variables in HashiCorp Cloud Platform (HCP) Vault Secrets](docs/hashicorp_cloud_secret_setup.md)
-[HashiCorp Cloud](https://portal.cloud.hashicorp.com/)
+* [Logging into HashiCorp Cloud Platform and Setting Up Environment Variables](docs/hashicorp_cloud_setup.md)
+* [Setting Up Variables in HashiCorp Cloud Platform (HCP) Vault Secrets](docs/hashicorp_cloud_secret_setup.md)
+* [HashiCorp Cloud](https://portal.cloud.hashicorp.com/)
 ```
 $ export HCP_CLIENT_ID="your-client-id"
 $ export HCP_CLIENT_SECRET="your-client-secret"

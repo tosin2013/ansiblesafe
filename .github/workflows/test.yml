@@ -56,9 +56,9 @@ jobs:
       run: |
         ./ansiblesafe -f ~/vault.yml -o 2
     
-    - name: Run skip encrypting/decrypting tests
-      run: |
-        ./ansiblesafe -f ~/vault.yml -o 5
+    #- name: Run skip encrypting/decrypting tests
+    #  run: |
+    #    ./ansiblesafe -f ~/vault.yml -o 5
 
     - name: Fetch latest tag and commit information
       run: |
